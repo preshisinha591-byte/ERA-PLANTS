@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Era Plant - Reward App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        .wheel {
+            transition: transform 4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .scratch-card {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .scratch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #c0c0c0;
+            cursor: crosshair;
+        }
+        
+        .toast {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .nav-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .earning-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: transform 0.2s ease;
+        }
+        
+        .earning-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .history-tab {
+            transition: all 0.2s ease;
+        }
+        
+        .history-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-blue-50 min-h-screen">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 mb-2">Era Plant</h1>
+                <p class="text-gray-600">Earn rewards daily!</p>
+            </div>
+            
+            <div class="mb-8">
+                <div class="w-24 h-24 mx-auto mb-4 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                    <span class="text-4xl">🌱</span>
+                </div>
+            </div>
+            
+            <!-- Email Sign In Form -->
+            <div id="emailSignInForm" class="space-y-4 mb-6">
+                <div>
+                    <input type="email" id="signInEmail" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" placeholder="Enter your email">
+                </div>
+                <div>
+                    <input type="password" id="signInPassword" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" placeholder="Enter your password">
+                </div>
+                <button onclick="signInWithEmail()" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 px-4 rounded-xl hover:from-green-600 hover:to-blue-600 transition-colors font-semibold">
+                    Sign In with Email
+                </button>
+            </div>
+
+            <!-- Email Sign Up Form -->
+            <div id="emailSignUpForm" class="hidden space-y-4 mb-6">
+                <div>
+                    <input type="text" id="signUpName" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" placeholder="Enter your full name">
+                </div>
+                <div>
+                    <input type="email" id="signUpEmail" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" placeholder="Enter your email">
+                </div>
+                <div>
+                    <input type="password" id="signUpPassword" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" placeholder="Create a password (min 6 characters)">
+                </div>
+                <div>
+                    <input type="password" id="signUpConfirmPassword" class="w-full p-3 border-2 border-gray-300 rounded-xl text-lg" placeholder="Confirm your password">
+                </div>
+                <button onclick="signUpWithEmail()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-colors font-semibold">
+                    Create Account
+                </button>
+            </div>
+
+            <!-- Toggle between Sign In and Sign Up -->
+            <div class="text-center mb-4">
+                <button onclick="toggleEmailForm()" id="toggleFormBtn" class="text-blue-500 hover:text-blue-600 font-medium">
+                    Don't have an account? Sign Up
+                </button>
+            </div>
+
+            <!-- Divider -->
+            <div class="flex items-center my-6">
+                <div class="flex-1 border-t border-gray-300"></div>
+                <span class="px-4 text-gray-500 text-sm">OR</span>
+                <div class="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            <!-- Google Sign In -->
+            <div id="g_id_onload"
+                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+            
+            <div id="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="sign_in_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left">
+            </div>
+            
+            <div class="mt-4">
+                <button onclick="showAccountSelector()" class="w-full bg-blue-500 text-white py-3 px-4 rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2">
+                    <span>📱</span>
+                    <span>Choose Google Account</span>
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-500 mt-4">Sign in with email or Google account to start earning coins!</p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden min-h-screen">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 shadow-lg">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold">Era Plant</h1>
+                    <p id="userGreeting" class="text-purple-100">Hello, User!</p>
+                </div>
+                <div class="text-right">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl">🪙</span>
+                        <span id="coinBalance" class="text-xl font-bold">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="pb-20">
+            <!-- Earn Section (Main Menu) -->
+            <div id="earnSection" class="p-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Earn Coins</h2>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Spin the Wheel Card -->
+                    <div onclick="openSpinWheel()" class="earning-card text-white p-6 rounded-2xl shadow-lg cursor-pointer">
+                        <div class="text-center">
+                            <div class="text-4xl mb-3">🎡</div>
+                            <h3 class="text-lg font-bold">Spin the Wheel</h3>
+                            <p class="text-sm opacity-90">Win 1-10 coins</p>
+                            <div class="mt-2 bg-white bg-opacity-20 rounded-lg px-2 py-1">
+                                <p class="text-xs font-semibold" id="spinLimit">Left: 10/10</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scratch Cards -->
+                    <div onclick="openScratchCard()" class="earning-card text-white p-6 rounded-2xl shadow-lg cursor-pointer">
+                        <div class="text-center">
+                            <div class="text-4xl mb-3">🎫</div>
+                            <h3 class="text-lg font-bold">Scratch Cards</h3>
+                            <p class="text-sm opacity-90">Scratch & win</p>
+                            <div class="mt-2 bg-white bg-opacity-20 rounded-lg px-2 py-1">
+                                <p class="text-xs font-semibold" id="scratchLimit">Left: 10/10</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Watch Ads -->
+                    <div onclick="openWatchAds()" class="earning-card text-white p-6 rounded-2xl shadow-lg cursor-pointer">
+                        <div class="text-center">
+                            <div class="text-4xl mb-3">📺</div>
+                            <h3 class="text-lg font-bold">Watch Ads</h3>
+                            <p class="text-sm opacity-90">2 coins per ad</p>
+                            <div class="mt-2 bg-white bg-opacity-20 rounded-lg px-2 py-1">
+                                <p class="text-xs font-semibold" id="adLimit">Unlimited</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Solve Captcha -->
+                    <div onclick="openCaptcha()" class="earning-card text-white p-6 rounded-2xl shadow-lg cursor-pointer">
+                        <div class="text-center">
+                            <div class="text-4xl mb-3">🧮</div>
+                            <h3 class="text-lg font-bold">Solve Captcha</h3>
+                            <p class="text-sm opacity-90">10 coins each</p>
+                            <div class="mt-2 bg-white bg-opacity-20 rounded-lg px-2 py-1">
+                                <p class="text-xs font-semibold" id="captchaLimit">Left: 20/20</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spin Wheel Page -->
+            <div id="spinWheelPage" class="hidden p-4">
+                <!-- Banner Ad Space -->
+                <div class="bg-gradient-to-r from-yellow-400 to-orange-500 p-3 rounded-xl text-center mb-4">
+                    <p class="text-white font-semibold">Banner Ad Space - Spin Wheel</p>
+                    <p class="text-xs text-yellow-100">ca-app-pub-./5069820541</p>
+                </div>
+                
+                <div class="flex items-center mb-4">
+                    <button onclick="goBack()" class="text-2xl mr-3">←</button>
+                    <h2 class="text-2xl font-bold text-gray-800">Spin the Wheel</h2>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                    <div class="relative mx-auto w-64 h-64 mb-6 flex items-center justify-center">
+                        <div class="relative w-60 h-60">
+                            <!-- Fixed Pointer (stays in place) -->
+                            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 z-10">
+                                <div class="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-red-600"></div>
+                            </div>
+                            
+                            <!-- Spinning Wheel -->
+                            <svg id="wheelSvg" class="wheel w-full h-full" viewBox="0 0 240 240" style="transform-origin: 120px 120px;">
+                                <!-- Outer circle border -->
+                                <circle cx="120" cy="120" r="115" fill="none" stroke="#333" stroke-width="6"/>
+                                
+                                <!-- Wheel segments -->
+                                <g id="wheelSegments">
+                                    <!-- Segment 1: 1 coin (Red) -->
+                                    <path d="M 120 120 L 120 5 A 115 115 0 0 1 218.3 80 Z" fill="#ff6b6b"/>
+                                    <!-- Segment 2: 3 coins (Teal) -->
+                                    <path d="M 120 120 L 218.3 80 A 115 115 0 0 1 218.3 160 Z" fill="#4ecdc4"/>
+                                    <!-- Segment 3: 5 coins (Blue) -->
+                                    <path d="M 120 120 L 218.3 160 A 115 115 0 0 1 120 235 Z" fill="#45b7d1"/>
+                                    <!-- Segment 4: 2 coins (Green) -->
+                                    <path d="M 120 120 L 120 235 A 115 115 0 0 1 21.7 160 Z" fill="#96ceb4"/>
+                                    <!-- Segment 5: 10 coins (Yellow) -->
+                                    <path d="M 120 120 L 21.7 160 A 115 115 0 0 1 21.7 80 Z" fill="#feca57"/>
+                                    <!-- Segment 6: 7 coins (Pink) -->
+                                    <path d="M 120 120 L 21.7 80 A 115 115 0 0 1 120 5 Z" fill="#ff9ff3"/>
+                                </g>
+                                
+                                <!-- Segment dividers -->
+                                <line x1="120" y1="120" x2="120" y2="5" stroke="#fff" stroke-width="3"/>
+                                <line x1="120" y1="120" x2="218.3" y2="80" stroke="#fff" stroke-width="3"/>
+                                <line x1="120" y1="120" x2="218.3" y2="160" stroke="#fff" stroke-width="3"/>
+                                <line x1="120" y1="120" x2="120" y2="235" stroke="#fff" stroke-width="3"/>
+                                <line x1="120" y1="120" x2="21.7" y2="160" stroke="#fff" stroke-width="3"/>
+                                <line x1="120" y1="120" x2="21.7" y2="80" stroke="#fff" stroke-width="3"/>
+                                
+                                <!-- Numbers -->
+                                <text x="169" y="62" text-anchor="middle" fill="white" font-size="20" font-weight="bold">1</text>
+                                <text x="198" y="120" text-anchor="middle" fill="white" font-size="20" font-weight="bold">3</text>
+                                <text x="169" y="178" text-anchor="middle" fill="white" font-size="20" font-weight="bold">5</text>
+                                <text x="71" y="178" text-anchor="middle" fill="white" font-size="20" font-weight="bold">2</text>
+                                <text x="42" y="120" text-anchor="middle" fill="white" font-size="20" font-weight="bold">10</text>
+                                <text x="71" y="62" text-anchor="middle" fill="white" font-size="20" font-weight="bold">7</text>
+                                
+                                <!-- Center circle -->
+                                <circle cx="120" cy="120" r="15" fill="#333"/>
+                                <circle cx="120" cy="120" r="10" fill="#fff"/>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <button onclick="spinWheel()" id="spinBtn" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-purple-600 hover:to-pink-600 transition-all mb-4">
+                        Spin Now!
+                    </button>
+                    
+                    <div class="border-t pt-4">
+                        <p class="text-gray-600 mb-2">Want an extra spin?</p>
+                        <button onclick="watchAdForSpin()" id="extraSpinBtn" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors">
+                            Watch Ad for Extra Spin
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scratch Card Page -->
+            <div id="scratchCardPage" class="hidden p-4">
+                <!-- Banner Ad Space -->
+                <div class="bg-gradient-to-r from-green-400 to-blue-500 p-3 rounded-xl text-center mb-4">
+                    <p class="text-white font-semibold">Banner Ad Space - Scratch Card</p>
+                    <p class="text-xs text-green-100">ca-app-pub-./5069820541</p>
+                </div>
+                
+                <div class="flex items-center mb-4">
+                    <button onclick="goBack()" class="text-2xl mr-3">←</button>
+                    <h2 class="text-2xl font-bold text-gray-800">Scratch Cards</h2>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                    <div class="relative mx-auto w-64 h-40 scratch-card rounded-xl mb-6">
+                        <div id="scratchReward" class="absolute inset-0 flex items-center justify-center text-3xl font-bold text-purple-800">
+                            🪙 <span id="scratchAmount">0</span>
+                        </div>
+                        <canvas id="scratchCanvas" class="scratch-overlay rounded-xl" width="256" height="160"></canvas>
+                    </div>
+                    
+                    <button onclick="newScratchCard()" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-blue-600 transition-all">
+                        New Card
+                    </button>
+                </div>
+            </div>
+
+            <!-- Watch Ads Page -->
+            <div id="watchAdsPage" class="hidden p-4">
+                <!-- Banner Ad Space -->
+                <div class="bg-gradient-to-r from-red-400 to-pink-500 p-3 rounded-xl text-center mb-4">
+                    <p class="text-white font-semibold">Banner Ad Space - Watch Ads</p>
+                    <p class="text-xs text-red-100">ca-app-pub-./5069820541</p>
+                </div>
+                
+                <div class="flex items-center mb-4">
+                    <button onclick="goBack()" class="text-2xl mr-3">←</button>
+                    <h2 class="text-2xl font-bold text-gray-800">Watch Ads</h2>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                    <div class="text-6xl mb-4">📺</div>
+                    <h3 class="text-xl font-bold mb-4">Earn 2 Coins Per Ad</h3>
+                    <p class="text-gray-600 mb-6">Watch rewarded ads to earn coins</p>
+                    
+                    <div class="bg-blue-50 rounded-xl p-4 mb-6">
+                        <p class="text-lg font-semibold text-blue-800">
+                            You can watch <span id="remainingAds" class="font-bold">∞</span> ads today
+                        </p>
+                        <p class="text-sm text-blue-600">Ads watched: <span id="adsWatched">0</span> (Unlimited!)</p>
+                    </div>
+                    
+                    <button onclick="watchRewardedAd()" id="watchAdBtn" class="bg-gradient-to-r from-red-500 to-pink-500 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-red-600 hover:to-pink-600 transition-all">
+                        Watch Ad Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Captcha Page -->
+            <div id="captchaPage" class="hidden p-4">
+                <!-- Banner Ad Space -->
+                <div class="bg-gradient-to-r from-indigo-400 to-purple-500 p-3 rounded-xl text-center mb-4">
+                    <p class="text-white font-semibold">Banner Ad Space - Captcha</p>
+                    <p class="text-xs text-indigo-100">ca-app-pub-./5069820541</p>
+                </div>
+                
+                <div class="flex items-center mb-4">
+                    <button onclick="goBack()" class="text-2xl mr-3">←</button>
+                    <h2 class="text-2xl font-bold text-gray-800">Solve Captcha</h2>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                    <div class="text-6xl mb-4">🧮</div>
+                    <h3 class="text-xl font-bold mb-4">Earn 10 Coins</h3>
+                    <p class="text-gray-600 mb-6">Solve the math problem correctly</p>
+                    
+                    <div class="bg-gray-100 rounded-xl p-6 mb-6">
+                        <p class="text-4xl font-bold mb-4" id="captchaQuestion">3 + 5 = ?</p>
+                        <input type="number" id="captchaAnswer" class="w-32 p-4 border-2 border-gray-300 rounded-xl text-center text-2xl font-bold" placeholder="?">
+                    </div>
+                    
+                    <button onclick="solveCaptcha()" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-indigo-600 hover:to-purple-600 transition-all">
+                        Submit Answer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profileSection" class="hidden p-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Profile</h2>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                            <span class="text-2xl">👤</span>
+                        </div>
+                        <h3 class="text-xl font-bold" id="profileName">User Name</h3>
+                        <p class="text-gray-600" id="profileEmail">user@email.com</p>
+                        <div class="mt-4 p-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-xl">
+                            <p class="text-lg font-semibold">💰 Coin Balance</p>
+                            <p class="text-3xl font-bold text-orange-600" id="profileCoins">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Care Bot -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        🤖 Customer Care Bot
+                    </h3>
+                    
+                    <div class="space-y-3 mb-4">
+                        <button onclick="askBot('withdrawal')" class="w-full text-left p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
+                            <p class="font-semibold text-blue-800">When will I get my withdrawal?</p>
+                        </button>
+                        
+                        <button onclick="askBot('minimum')" class="w-full text-left p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
+                            <p class="font-semibold text-green-800">Minimum coins for withdrawal?</p>
+                        </button>
+                        
+                        <button onclick="askBot('earn')" class="w-full text-left p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors">
+                            <p class="font-semibold text-purple-800">How to earn coins?</p>
+                        </button>
+                    </div>
+                    
+                    <div id="botResponse" class="hidden p-4 bg-gray-50 rounded-xl">
+                        <p class="text-sm text-gray-700" id="botAnswer"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div id="historySection" class="hidden p-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 History</h2>
+                
+                <!-- History Tabs -->
+                <div class="flex space-x-2 mb-6">
+                    <button onclick="showHistoryTab('earning')" id="earningTab" class="history-tab active flex-1 py-3 px-4 rounded-xl font-semibold text-center">
+                        💰 Earnings
+                    </button>
+                    <button onclick="showHistoryTab('withdrawal')" id="withdrawalTab" class="history-tab flex-1 py-3 px-4 rounded-xl font-semibold text-center bg-gray-100">
+                        💳 Withdrawals
+                    </button>
+                </div>
+
+                <!-- Earning History -->
+                <div id="earningHistory" class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">💰 Earning History</h3>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">Total Earned</p>
+                            <p class="text-xl font-bold text-green-600" id="totalEarned">0 coins</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Earning Summary Cards -->
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="bg-purple-50 p-4 rounded-xl text-center">
+                            <div class="text-2xl mb-1">🎡</div>
+                            <p class="text-sm text-gray-600">Spin Wheel</p>
+                            <p class="font-bold text-purple-600" id="spinEarnings">0 coins</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-xl text-center">
+                            <div class="text-2xl mb-1">🎫</div>
+                            <p class="text-sm text-gray-600">Scratch Cards</p>
+                            <p class="font-bold text-green-600" id="scratchEarnings">0 coins</p>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-xl text-center">
+                            <div class="text-2xl mb-1">📺</div>
+                            <p class="text-sm text-gray-600">Watch Ads</p>
+                            <p class="font-bold text-red-600" id="adEarnings">0 coins</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-xl text-center">
+                            <div class="text-2xl mb-1">🧮</div>
+                            <p class="text-sm text-gray-600">Captcha</p>
+                            <p class="font-bold text-blue-600" id="captchaEarnings">0 coins</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Earnings List -->
+                    <div>
+                        <h4 class="font-semibold mb-3">Recent Activities</h4>
+                        <div id="earningsList" class="space-y-2 max-h-64 overflow-y-auto">
+                            <div class="text-center text-gray-500 py-8">
+                                <div class="text-4xl mb-2">📈</div>
+                                <p>Start earning to see your history!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Withdrawal History -->
+                <div id="withdrawalHistory" class="hidden bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold">💳 Withdrawal History</h3>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">Total Withdrawn</p>
+                            <p class="text-xl font-bold text-blue-600" id="totalWithdrawn">₹0</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Withdrawal Stats -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-green-50 p-4 rounded-xl text-center">
+                            <p class="text-sm text-gray-600">Successful</p>
+                            <p class="text-2xl font-bold text-green-600" id="successfulWithdrawals">0</p>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-xl text-center">
+                            <p class="text-sm text-gray-600">Pending</p>
+                            <p class="text-2xl font-bold text-yellow-600" id="pendingWithdrawals">0</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Withdrawal List -->
+                    <div>
+                        <h4 class="font-semibold mb-3">Withdrawal Requests</h4>
+                        <div id="withdrawalsList" class="space-y-3 max-h-64 overflow-y-auto">
+                            <div class="text-center text-gray-500 py-8">
+                                <div class="text-4xl mb-2">💳</div>
+                                <p>No withdrawals yet!</p>
+                                <p class="text-sm">Earn 2200 coins to make your first withdrawal</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Withdrawal Section -->
+            <div id="withdrawSection" class="hidden p-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Withdrawal</h2>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold mb-2">💳 Cash Out</h3>
+                        <p class="text-gray-600">Minimum: ₹10 (2200 coins) | Maximum: ₹20 (4400 coins)</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Withdrawal Amount</label>
+                            <select id="withdrawAmount" class="w-full p-4 border-2 border-gray-300 rounded-xl text-lg">
+                                <option value="">Select Amount</option>
+                                <option value="10">₹10 (2200 coins)</option>
+                                <option value="20">₹20 (4400 coins)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">UPI ID</label>
+                            <input type="text" id="upiId" class="w-full p-4 border-2 border-gray-300 rounded-xl text-lg" placeholder="yourname@paytm">
+                        </div>
+                        
+                        <button onclick="submitWithdrawal()" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-blue-600 transition-all">
+                            Submit Withdrawal Request
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Section -->
+            <div id="leaderboardSection" class="hidden p-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">🏆 Leaderboard</h2>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold mb-4">Top 10 Users</h3>
+                    <div id="leaderboardList" class="space-y-3">
+                        <!-- Leaderboard items will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2">
+            <div class="flex justify-around">
+                <button onclick="showSection('earn')" class="nav-item flex flex-col items-center p-2 rounded-xl transition-all nav-active">
+                    <span class="text-lg mb-1">💰</span>
+                    <span class="text-xs font-medium">Earn</span>
+                </button>
+                <button onclick="showSection('profile')" class="nav-item flex flex-col items-center p-2 rounded-xl transition-all">
+                    <span class="text-lg mb-1">👤</span>
+                    <span class="text-xs font-medium">Profile</span>
+                </button>
+                <button onclick="showSection('history')" class="nav-item flex flex-col items-center p-2 rounded-xl transition-all">
+                    <span class="text-lg mb-1">📊</span>
+                    <span class="text-xs font-medium">History</span>
+                </button>
+                <button onclick="showSection('withdraw')" class="nav-item flex flex-col items-center p-2 rounded-xl transition-all">
+                    <span class="text-lg mb-1">💳</span>
+                    <span class="text-xs font-medium">Withdraw</span>
+                </button>
+                <button onclick="showSection('leaderboard')" class="nav-item flex flex-col items-center p-2 rounded-xl transition-all">
+                    <span class="text-lg mb-1">🏆</span>
+                    <span class="text-xs font-medium">Board</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Popup -->
+    <div id="resultPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
+            <div class="text-6xl mb-4" id="popupIcon">🎉</div>
+            <h3 class="text-2xl font-bold mb-2" id="popupTitle">Congratulations!</h3>
+            <p class="text-lg text-gray-600 mb-6" id="popupMessage">You won 5 coins!</p>
+            <button onclick="closePopup()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl font-bold">
+                Awesome!
+            </button>
+        </div>
+    </div>
+
+    <!-- Account Selector Popup -->
+    <div id="accountSelector" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Choose Account</h3>
+                <button onclick="closeAccountSelector()" class="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+            
+            <div class="space-y-3" id="accountList">
+                <!-- Account options will be populated here -->
+            </div>
+            
+            <div class="mt-4 pt-4 border-t">
+                <button onclick="addNewAccount()" class="w-full text-blue-500 hover:text-blue-600 py-2 text-sm font-medium">
+                    + Add another account
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg hidden toast z-50">
+        <p id="toastMessage">You earned 5 coins!</p>
+    </div>
+
+    <script>
+        // Ad Unit IDs (Your actual AdMob unit IDs)
+        const AD_UNITS = {
+            APP_OPEN: 'ca-app-pub-./3329417366',
+            BANNER: 'ca-app-pub-./5069820541',
+            REWARDED: 'ca-app-pub-./6087442642'
+        };
+
+        // Google Sheets Web App URL (Your actual URL)
+        const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzvAHOEP3YwYEzgCc__1EgIhj4xBl4NB_8HXKIiJb3-LEXQiiJRgM0MZw56XurKbIXG/exec';
+
+        // Global variables
+        let currentUser = null;
+        let userCoins = 0;
+        let adsWatchedToday = 0;
+        let spinsUsedToday = 0;
+        let scratchCardsUsedToday = 0;
+        let captchasSolvedToday = 0;
+        let currentCaptcha = { question: '', answer: 0 };
+        let scratchedPercentage = 0;
+        let currentScratchReward = 0;
+        let currentPage = 'earn';
+        let earningHistory = [];
+        let withdrawalHistory = [];
+
+        // Initialize app
+        function initApp() {
+            generateCaptcha();
+            newScratchCard();
+            updateLeaderboard();
+            initScratchCard();
+            loadHistoryData();
+            
+            // Show app open ad (with your actual unit ID)
+            setTimeout(() => {
+                console.log('App Open Ad showing with unit ID:', AD_UNITS.APP_OPEN);
+                showToast('🚀 Welcome to Era Plant! Start earning now!');
+            }, 1000);
+        }
+
+        // Google Sign-In Handler
+        function handleCredentialResponse(response) {
+            // Decode JWT token to get user info
+            const responsePayload = decodeJwtResponse(response.credential);
+            
+            const user = {
+                name: responsePayload.name,
+                email: responsePayload.email,
+                picture: responsePayload.picture
+            };
+            
+            handleSignIn(user);
+        }
+
+        function decodeJwtResponse(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+
+        function handleSignIn(user) {
+            currentUser = user;
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            // Update user info
+            document.getElementById('userGreeting').textContent = `Hello, ${user.name}!`;
+            document.getElementById('profileName').textContent = user.name;
+            document.getElementById('profileEmail').textContent = user.email;
+            
+            // Store account if it's new (from Google Sign-In)
+            if (!user.deviceId) {
+                const deviceInfo = {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    screenResolution: `${screen.width}x${screen.height}`,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                };
+                
+                user.deviceId = generateDeviceId(user.email, deviceInfo);
+                
+                // Add to stored accounts
+                const storedAccounts = getStoredAccounts();
+                const existingAccount = storedAccounts.find(acc => acc.email === user.email);
+                
+                if (!existingAccount) {
+                    storedAccounts.push({
+                        id: `account_${Date.now()}`,
+                        name: user.name,
+                        email: user.email,
+                        picture: user.picture || `https://via.placeholder.com/40/666/ffffff?text=${user.name.charAt(0)}`,
+                        deviceId: user.deviceId
+                    });
+                    localStorage.setItem('deviceAccounts', JSON.stringify(storedAccounts));
+                }
+            }
+            
+            // Load user data
+            loadUserData();
+            initApp();
+            
+            console.log('User signed in with Device ID:', user.deviceId);
+        }
+
+        function loadUserData() {
+            // Load from localStorage (in production, this would come from backend)
+            const today = new Date().toDateString();
+            const savedCoins = localStorage.getItem(`coins_${currentUser.email}`);
+            const savedAds = localStorage.getItem(`ads_${currentUser.email}_${today}`);
+            const savedSpins = localStorage.getItem(`spins_${currentUser.email}_${today}`);
+            const savedScratch = localStorage.getItem(`scratch_${currentUser.email}_${today}`);
+            const savedCaptcha = localStorage.getItem(`captcha_${currentUser.email}_${today}`);
+            
+            userCoins = savedCoins ? parseInt(savedCoins) : 0;
+            adsWatchedToday = savedAds ? parseInt(savedAds) : 0;
+            spinsUsedToday = savedSpins ? parseInt(savedSpins) : 0;
+            scratchCardsUsedToday = savedScratch ? parseInt(savedScratch) : 0;
+            captchasSolvedToday = savedCaptcha ? parseInt(savedCaptcha) : 0;
+            
+            updateCoinDisplay();
+            updateAllLimitsDisplay();
+        }
+
+        function saveUserData() {
+            const today = new Date().toDateString();
+            localStorage.setItem(`coins_${currentUser.email}`, userCoins.toString());
+            localStorage.setItem(`ads_${currentUser.email}_${today}`, adsWatchedToday.toString());
+            localStorage.setItem(`spins_${currentUser.email}_${today}`, spinsUsedToday.toString());
+            localStorage.setItem(`scratch_${currentUser.email}_${today}`, scratchCardsUsedToday.toString());
+            localStorage.setItem(`captcha_${currentUser.email}_${today}`, captchasSolvedToday.toString());
+        }
+
+        // Navigation functions
+        function showSection(section) {
+            // Hide all sections and pages
+            document.querySelectorAll('#earnSection, #profileSection, #withdrawSection, #leaderboardSection, #historySection, #spinWheelPage, #scratchCardPage, #watchAdsPage, #captchaPage').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Show selected section
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            currentPage = section;
+            
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('nav-active');
+            });
+            event.target.closest('.nav-item').classList.add('nav-active');
+            
+            // Update history when history section is opened
+            if (section === 'history') {
+                updateHistoryDisplay();
+            }
+        }
+
+        function openSpinWheel() {
+            document.getElementById('earnSection').classList.add('hidden');
+            document.getElementById('spinWheelPage').classList.remove('hidden');
+            currentPage = 'spinWheel';
+            
+            // Show banner ad
+            console.log('Banner Ad showing with unit ID:', AD_UNITS.BANNER);
+        }
+
+        function openScratchCard() {
+            document.getElementById('earnSection').classList.add('hidden');
+            document.getElementById('scratchCardPage').classList.remove('hidden');
+            currentPage = 'scratchCard';
+            
+            // Show banner ad
+            console.log('Banner Ad showing with unit ID:', AD_UNITS.BANNER);
+        }
+
+        function openWatchAds() {
+            document.getElementById('earnSection').classList.add('hidden');
+            document.getElementById('watchAdsPage').classList.remove('hidden');
+            currentPage = 'watchAds';
+            
+            // Show banner ad
+            console.log('Banner Ad showing with unit ID:', AD_UNITS.BANNER);
+        }
+
+        function openCaptcha() {
+            document.getElementById('earnSection').classList.add('hidden');
+            document.getElementById('captchaPage').classList.remove('hidden');
+            currentPage = 'captcha';
+            
+            // Show banner ad
+            console.log('Banner Ad showing with unit ID:', AD_UNITS.BANNER);
+        }
+
+        function goBack() {
+            // Hide all pages
+            document.querySelectorAll('#spinWheelPage, #scratchCardPage, #watchAdsPage, #captchaPage').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Show earn section
+            document.getElementById('earnSection').classList.remove('hidden');
+            currentPage = 'earn';
+        }
+
+        // Coin management
+        function updateCoinDisplay() {
+            document.getElementById('coinBalance').textContent = userCoins;
+            document.getElementById('profileCoins').textContent = userCoins;
+        }
+
+        function addCoins(amount, source = 'unknown') {
+            userCoins += amount;
+            updateCoinDisplay();
+            showToast(`You earned ${amount} coins!`);
+            
+            // Add to earning history
+            addToEarningHistory(amount, source);
+            
+            saveUserData();
+        }
+
+        function addToEarningHistory(amount, source) {
+            const earning = {
+                id: Date.now(),
+                amount: amount,
+                source: source,
+                timestamp: new Date().toISOString(),
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString()
+            };
+            
+            earningHistory.unshift(earning); // Add to beginning
+            
+            // Keep only last 100 entries
+            if (earningHistory.length > 100) {
+                earningHistory = earningHistory.slice(0, 100);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem(`earningHistory_${currentUser.email}`, JSON.stringify(earningHistory));
+        }
+
+        function addToWithdrawalHistory(amount, coinsDeducted, upiId) {
+            const withdrawal = {
+                id: Date.now(),
+                amount: amount,
+                coinsDeducted: coinsDeducted,
+                upiId: upiId,
+                status: 'Pending',
+                timestamp: new Date().toISOString(),
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString()
+            };
+            
+            withdrawalHistory.unshift(withdrawal); // Add to beginning
+            
+            // Save to localStorage
+            localStorage.setItem(`withdrawalHistory_${currentUser.email}`, JSON.stringify(withdrawalHistory));
+        }
+
+        function loadHistoryData() {
+            // Load earning history
+            const savedEarnings = localStorage.getItem(`earningHistory_${currentUser.email}`);
+            if (savedEarnings) {
+                earningHistory = JSON.parse(savedEarnings);
+            }
+            
+            // Load withdrawal history
+            const savedWithdrawals = localStorage.getItem(`withdrawalHistory_${currentUser.email}`);
+            if (savedWithdrawals) {
+                withdrawalHistory = JSON.parse(savedWithdrawals);
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function showPopup(icon, title, message) {
+            document.getElementById('popupIcon').textContent = icon;
+            document.getElementById('popupTitle').textContent = title;
+            document.getElementById('popupMessage').textContent = message;
+            document.getElementById('resultPopup').classList.remove('hidden');
+        }
+
+        function closePopup() {
+            document.getElementById('resultPopup').classList.add('hidden');
+        }
+
+        // Spin Wheel
+        function spinWheel() {
+            // Check daily limit
+            if (spinsUsedToday >= 10) {
+                showToast('❌ Daily spin limit reached! Come back tomorrow.');
+                return;
+            }
+            
+            const wheelSvg = document.getElementById('wheelSvg');
+            const spinBtn = document.getElementById('spinBtn');
+            
+            spinBtn.disabled = true;
+            spinBtn.textContent = 'Spinning...';
+            
+            // Weighted probability for rewards
+            const rewards = [1, 3, 5, 2, 10, 7]; // Order matches wheel segments (top to bottom clockwise)
+            const weights = [30, 20, 15, 25, 2, 8]; // 10 coins has only 2% chance
+            
+            let totalWeight = weights.reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+            let selectedReward = rewards[0];
+            let selectedIndex = 0;
+            
+            for (let i = 0; i < weights.length; i++) {
+                if (random < weights[i]) {
+                    selectedReward = rewards[i];
+                    selectedIndex = i;
+                    break;
+                }
+                random -= weights[i];
+            }
+            
+            // Calculate rotation - wheel spins, pointer stays fixed at top
+            const baseRotation = 1800; // 5 full rotations for dramatic effect
+            const segmentAngle = 60; // 6 segments, 60 degrees each
+            
+            // Calculate target angle so selected segment aligns with top pointer
+            // Segments start from top (0°) and go clockwise
+            const targetAngle = selectedIndex * segmentAngle + (segmentAngle / 2);
+            
+            // Final rotation: base rotations + adjustment to land on target
+            const finalRotation = baseRotation + (360 - targetAngle) + Math.random() * 10 - 5;
+            
+            // Apply rotation to the entire SVG
+            wheelSvg.style.transform = `rotate(${finalRotation}deg)`;
+            
+            setTimeout(() => {
+                spinsUsedToday++;
+                addCoins(selectedReward, 'Spin Wheel');
+                showPopup('🎉', 'Congratulations!', `You won ${selectedReward} coins!`);
+                
+                // Update button text based on remaining spins
+                const spinsLeft = 10 - spinsUsedToday;
+                if (spinsLeft > 0) {
+                    spinBtn.disabled = false;
+                    spinBtn.textContent = `Spin Again! (${spinsLeft} left)`;
+                } else {
+                    spinBtn.disabled = true;
+                    spinBtn.textContent = 'Daily Limit Reached';
+                    spinBtn.classList.add('opacity-50');
+                }
+                
+                updateAllLimitsDisplay();
+                saveUserData();
+            }, 4000);
+        }
+
+        function watchAdForSpin() {
+            // Show rewarded ad with your actual unit ID
+            console.log('Showing rewarded ad with unit ID:', AD_UNITS.REWARDED);
+            
+            const extraSpinBtn = document.getElementById('extraSpinBtn');
+            extraSpinBtn.disabled = true;
+            extraSpinBtn.textContent = 'Loading Ad...';
+            
+            setTimeout(() => {
+                showToast('Ad completed! You got an extra spin!');
+                extraSpinBtn.disabled = false;
+                extraSpinBtn.textContent = 'Watch Ad for Extra Spin';
+                // Enable spin button if it was disabled
+                document.getElementById('spinBtn').disabled = false;
+                document.getElementById('spinBtn').classList.remove('opacity-50');
+                document.getElementById('spinBtn').textContent = 'Spin Now!';
+            }, 3000);
+        }
+
+        // Scratch Card
+        function initScratchCard() {
+            const canvas = document.getElementById('scratchCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Fill canvas with scratch surface
+            ctx.fillStyle = '#c0c0c0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add scratch text
+            ctx.fillStyle = '#888';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Scratch Here!', canvas.width/2, canvas.height/2);
+            
+            let isScratching = false;
+            scratchedPercentage = 0;
+            
+            function scratch(e) {
+                if (!isScratching) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                
+                // Scale coordinates to canvas size
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x * scaleX, y * scaleY, 20, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Calculate scratched percentage
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let transparent = 0;
+                for (let i = 3; i < imageData.data.length; i += 4) {
+                    if (imageData.data[i] === 0) transparent++;
+                }
+                scratchedPercentage = (transparent / (canvas.width * canvas.height)) * 100;
+                
+                if (scratchedPercentage > 80) {
+                    scratchCardsUsedToday++;
+                    addCoins(currentScratchReward, 'Scratch Card');
+                    showPopup('🎫', 'Scratch Complete!', `You won ${currentScratchReward} coins!`);
+                    canvas.style.display = 'none';
+                    updateAllLimitsDisplay();
+                    saveUserData();
+                }
+            }
+            
+            // Mouse events
+            canvas.addEventListener('mousedown', (e) => {
+                isScratching = true;
+                scratch(e);
+            });
+            
+            canvas.addEventListener('mousemove', scratch);
+            canvas.addEventListener('mouseup', () => isScratching = false);
+            canvas.addEventListener('mouseleave', () => isScratching = false);
+            
+            // Touch events
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isScratching = true;
+                scratch(e);
+            });
+            
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                scratch(e);
+            });
+            
+            canvas.addEventListener('touchend', () => isScratching = false);
+        }
+
+        function newScratchCard() {
+            // Check daily limit
+            if (scratchCardsUsedToday >= 10) {
+                showToast('❌ Daily scratch card limit reached! Come back tomorrow.');
+                return;
+            }
+            
+            const canvas = document.getElementById('scratchCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Generate random reward with weighted probability
+            const rewards = [1, 2, 3, 5, 7, 10];
+            const weights = [30, 25, 20, 15, 8, 2];
+            
+            let totalWeight = weights.reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+            currentScratchReward = rewards[0];
+            
+            for (let i = 0; i < weights.length; i++) {
+                if (random < weights[i]) {
+                    currentScratchReward = rewards[i];
+                    break;
+                }
+                random -= weights[i];
+            }
+            
+            document.getElementById('scratchAmount').textContent = currentScratchReward;
+            
+            // Reset canvas
+            canvas.style.display = 'block';
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = '#c0c0c0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#888';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Scratch Here!', canvas.width/2, canvas.height/2);
+            
+            scratchedPercentage = 0;
+        }
+
+        // Watch Ads
+        function updateAllLimitsDisplay() {
+            // Update spin limit
+            const spinsLeft = Math.max(0, 10 - spinsUsedToday);
+            document.getElementById('spinLimit').textContent = `Left: ${spinsLeft}/10`;
+            
+            // Update scratch card limit
+            const scratchLeft = Math.max(0, 10 - scratchCardsUsedToday);
+            document.getElementById('scratchLimit').textContent = `Left: ${scratchLeft}/10`;
+            
+            // Update ad limit - unlimited
+            document.getElementById('adLimit').textContent = 'Unlimited';
+            
+            // Update captcha limit
+            const captchaLeft = Math.max(0, 20 - captchasSolvedToday);
+            document.getElementById('captchaLimit').textContent = `Left: ${captchaLeft}/20`;
+            
+            // Update detailed ad display if on ads page
+            if (document.getElementById('remainingAds')) {
+                document.getElementById('remainingAds').textContent = '∞';
+                document.getElementById('adsWatched').textContent = adsWatchedToday;
+                
+                // Ads are always available - no limit
+                const watchBtn = document.getElementById('watchAdBtn');
+                watchBtn.disabled = false;
+                watchBtn.textContent = 'Watch Ad Now';
+                watchBtn.classList.remove('opacity-50');
+            }
+        }
+
+        function watchRewardedAd() {
+            // No daily limit for ads - unlimited earning!
+            
+            const watchBtn = document.getElementById('watchAdBtn');
+            watchBtn.disabled = true;
+            watchBtn.textContent = 'Loading Ad...';
+            
+            // Show rewarded ad with your actual unit ID
+            console.log('Showing rewarded ad with unit ID:', AD_UNITS.REWARDED);
+            
+            setTimeout(() => {
+                adsWatchedToday++;
+                addCoins(2, 'Watch Ad');
+                updateAllLimitsDisplay();
+                saveUserData();
+                
+                watchBtn.disabled = false;
+                watchBtn.textContent = 'Watch Another Ad';
+            }, 5000); // 5 second ad simulation
+        }
+
+        // Captcha
+        function generateCaptcha() {
+            const operations = ['+', '-'];
+            const operation = operations[Math.floor(Math.random() * operations.length)];
+            let num1, num2, answer;
+            
+            if (operation === '+') {
+                num1 = Math.floor(Math.random() * 20) + 1;
+                num2 = Math.floor(Math.random() * 20) + 1;
+                answer = num1 + num2;
+            } else {
+                num1 = Math.floor(Math.random() * 30) + 10;
+                num2 = Math.floor(Math.random() * num1) + 1;
+                answer = num1 - num2;
+            }
+            
+            currentCaptcha = {
+                question: `${num1} ${operation} ${num2} = ?`,
+                answer: answer
+            };
+            
+            document.getElementById('captchaQuestion').textContent = currentCaptcha.question;
+            document.getElementById('captchaAnswer').value = '';
+        }
+
+        function solveCaptcha() {
+            // Check daily limit
+            if (captchasSolvedToday >= 20) {
+                showToast('❌ Daily captcha limit reached! Come back tomorrow.');
+                return;
+            }
+            
+            const userAnswer = parseInt(document.getElementById('captchaAnswer').value);
+            
+            if (userAnswer === currentCaptcha.answer) {
+                captchasSolvedToday++;
+                addCoins(10, 'Solve Captcha');
+                showPopup('🧮', 'Correct!', 'You earned 10 coins!');
+                generateCaptcha();
+                updateAllLimitsDisplay();
+                saveUserData();
+            } else {
+                showToast('Wrong answer! Try again.');
+                document.getElementById('captchaAnswer').value = '';
+            }
+        }
+
+        // History Functions
+        function showHistoryTab(tab) {
+            // Update tab buttons
+            document.getElementById('earningTab').classList.remove('active');
+            document.getElementById('withdrawalTab').classList.remove('active');
+            document.getElementById('earningTab').classList.add('bg-gray-100');
+            document.getElementById('withdrawalTab').classList.add('bg-gray-100');
+            
+            if (tab === 'earning') {
+                document.getElementById('earningTab').classList.add('active');
+                document.getElementById('earningTab').classList.remove('bg-gray-100');
+                document.getElementById('earningHistory').classList.remove('hidden');
+                document.getElementById('withdrawalHistory').classList.add('hidden');
+            } else {
+                document.getElementById('withdrawalTab').classList.add('active');
+                document.getElementById('withdrawalTab').classList.remove('bg-gray-100');
+                document.getElementById('earningHistory').classList.add('hidden');
+                document.getElementById('withdrawalHistory').classList.remove('hidden');
+            }
+            
+            updateHistoryDisplay();
+        }
+
+        function updateHistoryDisplay() {
+            updateEarningHistoryDisplay();
+            updateWithdrawalHistoryDisplay();
+        }
+
+        function updateEarningHistoryDisplay() {
+            // Calculate totals by source
+            let totalEarned = 0;
+            let spinEarnings = 0;
+            let scratchEarnings = 0;
+            let adEarnings = 0;
+            let captchaEarnings = 0;
+            
+            earningHistory.forEach(earning => {
+                totalEarned += earning.amount;
+                switch(earning.source) {
+                    case 'Spin Wheel':
+                        spinEarnings += earning.amount;
+                        break;
+                    case 'Scratch Card':
+                        scratchEarnings += earning.amount;
+                        break;
+                    case 'Watch Ad':
+                        adEarnings += earning.amount;
+                        break;
+                    case 'Solve Captcha':
+                        captchaEarnings += earning.amount;
+                        break;
+                }
+            });
+            
+            // Update summary cards
+            document.getElementById('totalEarned').textContent = `${totalEarned} coins`;
+            document.getElementById('spinEarnings').textContent = `${spinEarnings} coins`;
+            document.getElementById('scratchEarnings').textContent = `${scratchEarnings} coins`;
+            document.getElementById('adEarnings').textContent = `${adEarnings} coins`;
+            document.getElementById('captchaEarnings').textContent = `${captchaEarnings} coins`;
+            
+            // Update earnings list
+            const earningsList = document.getElementById('earningsList');
+            
+            if (earningHistory.length === 0) {
+                earningsList.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <div class="text-4xl mb-2">📈</div>
+                        <p>Start earning to see your history!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            earningsList.innerHTML = '';
+            
+            // Show last 20 earnings
+            const recentEarnings = earningHistory.slice(0, 20);
+            
+            recentEarnings.forEach(earning => {
+                const earningDiv = document.createElement('div');
+                earningDiv.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-xl';
+                
+                const sourceEmoji = {
+                    'Spin Wheel': '🎡',
+                    'Scratch Card': '🎫',
+                    'Watch Ad': '📺',
+                    'Solve Captcha': '🧮'
+                };
+                
+                earningDiv.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-2xl">${sourceEmoji[earning.source] || '💰'}</span>
+                        <div>
+                            <p class="font-semibold">${earning.source}</p>
+                            <p class="text-sm text-gray-500">${earning.date} at ${earning.time}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-green-600">+${earning.amount} coins</p>
+                    </div>
+                `;
+                
+                earningsList.appendChild(earningDiv);
+            });
+        }
+
+        function updateWithdrawalHistoryDisplay() {
+            // Calculate totals
+            let totalWithdrawn = 0;
+            let successfulCount = 0;
+            let pendingCount = 0;
+            
+            withdrawalHistory.forEach(withdrawal => {
+                if (withdrawal.status === 'Completed') {
+                    totalWithdrawn += withdrawal.amount;
+                    successfulCount++;
+                } else {
+                    pendingCount++;
+                }
+            });
+            
+            // Update summary
+            document.getElementById('totalWithdrawn').textContent = `₹${totalWithdrawn}`;
+            document.getElementById('successfulWithdrawals').textContent = successfulCount;
+            document.getElementById('pendingWithdrawals').textContent = pendingCount;
+            
+            // Update withdrawals list
+            const withdrawalsList = document.getElementById('withdrawalsList');
+            
+            if (withdrawalHistory.length === 0) {
+                withdrawalsList.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <div class="text-4xl mb-2">💳</div>
+                        <p>No withdrawals yet!</p>
+                        <p class="text-sm">Earn 2200 coins to make your first withdrawal</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            withdrawalsList.innerHTML = '';
+            
+            withdrawalHistory.forEach(withdrawal => {
+                const withdrawalDiv = document.createElement('div');
+                withdrawalDiv.className = 'p-4 bg-gray-50 rounded-xl';
+                
+                const statusColor = withdrawal.status === 'Completed' ? 'text-green-600' : 'text-yellow-600';
+                const statusBg = withdrawal.status === 'Completed' ? 'bg-green-100' : 'bg-yellow-100';
+                
+                withdrawalDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <p class="font-bold text-lg">₹${withdrawal.amount}</p>
+                            <p class="text-sm text-gray-600">${withdrawal.coinsDeducted} coins deducted</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-lg text-xs font-semibold ${statusColor} ${statusBg}">
+                            ${withdrawal.status}
+                        </span>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        <p>UPI: ${withdrawal.upiId}</p>
+                        <p>${withdrawal.date} at ${withdrawal.time}</p>
+                    </div>
+                `;
+                
+                withdrawalsList.appendChild(withdrawalDiv);
+            });
+        }
+
+        // Customer Care Bot
+        function askBot(type) {
+            const responses = {
+                withdrawal: 'Withdrawal requests are processed within 24-48 hours. You will receive payment directly to your UPI ID after verification.',
+                minimum: 'Minimum withdrawal is ₹10 (requires 2200 coins). Maximum withdrawal is ₹20 (requires 4400 coins). You can withdraw once per day.',
+                earn: 'You can earn coins by: 1) Spinning the wheel (1-10 coins), 2) Scratch cards (1-10 coins), 3) Watching ads (2 coins each, unlimited), 4) Solving captcha (10 coins each).'
+            };
+            
+            const botResponse = document.getElementById('botResponse');
+            const botAnswer = document.getElementById('botAnswer');
+            
+            botAnswer.textContent = responses[type];
+            botResponse.classList.remove('hidden');
+        }
+
+        // Withdrawal
+        async function submitWithdrawal() {
+            const amount = document.getElementById('withdrawAmount').value;
+            const upiId = document.getElementById('upiId').value.trim();
+            
+            if (!amount || !upiId) {
+                showToast('Please fill all fields!');
+                return;
+            }
+            
+            const coinsNeeded = amount === '10' ? 2200 : 4400;
+            
+            if (userCoins < coinsNeeded) {
+                showToast('❌ Insufficient coins! You need ' + coinsNeeded + ' coins for ₹' + amount + ' withdrawal');
+                showPopup('💰', 'Insufficient Coins!', `You have ${userCoins} coins but need ${coinsNeeded} coins for ₹${amount} withdrawal. Keep earning more coins!`);
+                return;
+            }
+            
+            // Deduct only the required coins
+            userCoins -= coinsNeeded;
+            updateCoinDisplay();
+            
+            // Add to withdrawal history
+            addToWithdrawalHistory(parseInt(amount), coinsNeeded, upiId);
+            
+            saveUserData();
+            
+            // Prepare data for Google Sheets
+            const withdrawalData = {
+                name: currentUser.name,
+                email: currentUser.email,
+                upi: upiId,
+                coinsDeducted: coinsNeeded,
+                amount: amount,
+                datetime: new Date().toLocaleString(),
+                deviceId: currentUser.deviceId || 'unknown'
+            };
+            
+            try {
+                // Send to Google Sheets
+                const response = await fetch(SHEETS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(withdrawalData)
+                });
+                
+                showToast('✅ Withdrawal request submitted successfully!');
+                showPopup('💳', 'Request Submitted!', `Your ₹${amount} withdrawal request has been sent. You will receive payment within 24-48 hours.`);
+                
+            } catch (error) {
+                console.error('Error submitting withdrawal:', error);
+                showToast('✅ Request submitted! (Processing...)');
+            }
+            
+            // Reset form
+            document.getElementById('withdrawAmount').value = '';
+            document.getElementById('upiId').value = '';
+        }
+
+        // Leaderboard
+        function updateLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboardList');
+            
+            // Get all real users from localStorage
+            const allUsers = getAllRealUsers();
+            
+            // Sort by coins (highest first) and take top 10
+            const topUsers = allUsers
+                .sort((a, b) => b.coins - a.coins)
+                .slice(0, 10);
+            
+            leaderboardList.innerHTML = '';
+            
+            if (topUsers.length === 0) {
+                // Show message when no users yet
+                const noUsersDiv = document.createElement('div');
+                noUsersDiv.className = 'text-center p-8 text-gray-500';
+                noUsersDiv.innerHTML = `
+                    <div class="text-4xl mb-2">🏆</div>
+                    <p class="font-medium">No users on leaderboard yet!</p>
+                    <p class="text-sm">Be the first to earn coins and claim the top spot!</p>
+                `;
+                leaderboardList.appendChild(noUsersDiv);
+                return;
+            }
+            
+            topUsers.forEach((user, index) => {
+                const position = index + 1;
+                const medal = position <= 3 ? ['🥇', '🥈', '🥉'][position - 1] : `${position}.`;
+                
+                // Highlight current user
+                const isCurrentUser = currentUser && user.email === currentUser.email;
+                const bgClass = isCurrentUser ? 'bg-gradient-to-r from-purple-100 to-blue-100 border-2 border-purple-300' : 'bg-gray-50';
+                
+                const userDiv = document.createElement('div');
+                userDiv.className = `flex items-center justify-between p-4 rounded-xl ${bgClass}`;
+                userDiv.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xl font-bold">${medal}</span>
+                        <div>
+                            <span class="font-semibold ${isCurrentUser ? 'text-purple-800' : ''}">${user.name}${isCurrentUser ? ' (You)' : ''}</span>
+                            ${isCurrentUser ? '<p class="text-xs text-purple-600">Your ranking</p>' : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span class="text-lg">🪙</span>
+                        <span class="font-bold text-lg ${isCurrentUser ? 'text-purple-800' : ''}">${user.coins.toLocaleString()}</span>
+                    </div>
+                `;
+                leaderboardList.appendChild(userDiv);
+            });
+        }
+
+        function getAllRealUsers() {
+            const users = [];
+            
+            // Get all email users
+            const emailUsers = getStoredEmailUsers();
+            emailUsers.forEach(user => {
+                const coins = parseInt(localStorage.getItem(`coins_${user.email}`) || '0');
+                users.push({
+                    name: user.name,
+                    email: user.email,
+                    coins: coins,
+                    type: 'email'
+                });
+            });
+            
+            // Get all Google account users
+            const googleAccounts = getStoredAccounts();
+            googleAccounts.forEach(account => {
+                const coins = parseInt(localStorage.getItem(`coins_${account.email}`) || '0');
+                users.push({
+                    name: account.name,
+                    email: account.email,
+                    coins: coins,
+                    type: 'google'
+                });
+            });
+            
+            // Remove duplicates (same email from different sources)
+            const uniqueUsers = users.filter((user, index, self) => 
+                index === self.findIndex(u => u.email === user.email)
+            );
+            
+            return uniqueUsers;
+        }
+
+        // Enter key support
+        document.getElementById('captchaAnswer').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                solveCaptcha();
+            }
+        });
+
+        // Account Selector Functions
+        function showAccountSelector() {
+            // Get stored accounts from localStorage
+            const storedAccounts = getStoredAccounts();
+            populateAccountList(storedAccounts);
+            document.getElementById('accountSelector').classList.remove('hidden');
+        }
+
+        function closeAccountSelector() {
+            document.getElementById('accountSelector').classList.add('hidden');
+        }
+
+        function getStoredAccounts() {
+            // Get actual accounts from localStorage (only real signed-in accounts)
+            const accounts = localStorage.getItem('deviceAccounts');
+            if (accounts) {
+                return JSON.parse(accounts);
+            } else {
+                // Return empty array if no accounts stored yet
+                return [];
+            }
+        }
+
+        function populateAccountList(accounts) {
+            const accountList = document.getElementById('accountList');
+            accountList.innerHTML = '';
+            
+            if (accounts.length === 0) {
+                // Show message when no accounts are stored
+                const noAccountsDiv = document.createElement('div');
+                noAccountsDiv.className = 'text-center p-6 text-gray-500';
+                noAccountsDiv.innerHTML = `
+                    <div class="text-4xl mb-2">📱</div>
+                    <p class="font-medium">No accounts found</p>
+                    <p class="text-sm">Sign in with Google to add your first account</p>
+                `;
+                accountList.appendChild(noAccountsDiv);
+                return;
+            }
+            
+            accounts.forEach(account => {
+                const accountDiv = document.createElement('div');
+                accountDiv.className = 'flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors';
+                accountDiv.onclick = () => selectAccount(account);
+                
+                accountDiv.innerHTML = `
+                    <img src="${account.picture}" alt="${account.name}" class="w-10 h-10 rounded-full" onerror="this.src='https://via.placeholder.com/40/666/ffffff?text=${account.name.charAt(0)}'">
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-800">${account.name}</p>
+                        <p class="text-sm text-gray-500">${account.email}</p>
+                    </div>
+                    <div class="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
+                `;
+                
+                accountList.appendChild(accountDiv);
+            });
+        }
+
+        function selectAccount(account) {
+            // Generate device ID based on account and device info
+            const deviceInfo = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screenResolution: `${screen.width}x${screen.height}`,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+            
+            const deviceId = generateDeviceId(account.email, deviceInfo);
+            
+            // Create user object with device ID
+            const user = {
+                ...account,
+                deviceId: deviceId
+            };
+            
+            closeAccountSelector();
+            handleSignIn(user);
+            showToast(`Signed in as ${account.name} with device ID: ${deviceId.substring(0, 8)}...`);
+        }
+
+        function generateDeviceId(email, deviceInfo) {
+            // Create a unique device ID based on account and device characteristics
+            const data = email + deviceInfo.userAgent + deviceInfo.platform + deviceInfo.screenResolution;
+            
+            // Simple hash function to generate device ID
+            let hash = 0;
+            for (let i = 0; i < data.length; i++) {
+                const char = data.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            
+            // Convert to positive hex string
+            const deviceId = Math.abs(hash).toString(16).padStart(8, '0');
+            return `DEV_${deviceId}_${Date.now().toString(36)}`;
+        }
+
+        function addNewAccount() {
+            closeAccountSelector();
+            // Trigger Google Sign-In for new account
+            if (typeof google !== 'undefined') {
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        // Fallback to manual sign-in
+                        showToast('Please use the Google Sign-In button to add a new account');
+                    }
+                });
+            } else {
+                showToast('Google Sign-In not available');
+            }
+        }
+
+        // Email Authentication Functions
+        let isSignUpMode = false;
+
+        function toggleEmailForm() {
+            const signInForm = document.getElementById('emailSignInForm');
+            const signUpForm = document.getElementById('emailSignUpForm');
+            const toggleBtn = document.getElementById('toggleFormBtn');
+            
+            isSignUpMode = !isSignUpMode;
+            
+            if (isSignUpMode) {
+                signInForm.classList.add('hidden');
+                signUpForm.classList.remove('hidden');
+                toggleBtn.textContent = 'Already have an account? Sign In';
+            } else {
+                signInForm.classList.remove('hidden');
+                signUpForm.classList.add('hidden');
+                toggleBtn.textContent = "Don't have an account? Sign Up";
+            }
+        }
+
+        function signInWithEmail() {
+            const email = document.getElementById('signInEmail').value.trim();
+            const password = document.getElementById('signInPassword').value;
+            
+            if (!email || !password) {
+                showToast('❌ Please fill all fields!');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showToast('❌ Please enter a valid email address!');
+                return;
+            }
+            
+            // Check if user exists in localStorage
+            const storedUsers = getStoredEmailUsers();
+            const user = storedUsers.find(u => u.email === email);
+            
+            if (!user) {
+                showToast('❌ Account not found! Please sign up first.');
+                return;
+            }
+            
+            if (user.password !== password) {
+                showToast('❌ Incorrect password! Please try again.');
+                return;
+            }
+            
+            // Successful sign in
+            const signInUser = {
+                name: user.name,
+                email: user.email,
+                picture: `https://via.placeholder.com/40/4f46e5/ffffff?text=${user.name.charAt(0).toUpperCase()}`,
+                loginMethod: 'email'
+            };
+            
+            handleSignIn(signInUser);
+            showToast('✅ Successfully signed in!');
+        }
+
+        function signUpWithEmail() {
+            const name = document.getElementById('signUpName').value.trim();
+            const email = document.getElementById('signUpEmail').value.trim();
+            const password = document.getElementById('signUpPassword').value;
+            const confirmPassword = document.getElementById('signUpConfirmPassword').value;
+            
+            if (!name || !email || !password || !confirmPassword) {
+                showToast('❌ Please fill all fields!');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showToast('❌ Please enter a valid email address!');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showToast('❌ Password must be at least 6 characters long!');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showToast('❌ Passwords do not match!');
+                return;
+            }
+            
+            // Check if user already exists
+            const storedUsers = getStoredEmailUsers();
+            const existingUser = storedUsers.find(u => u.email === email);
+            
+            if (existingUser) {
+                showToast('❌ Account already exists! Please sign in instead.');
+                return;
+            }
+            
+            // Create new user
+            const newUser = {
+                id: `email_${Date.now()}`,
+                name: name,
+                email: email,
+                password: password,
+                createdAt: new Date().toISOString()
+            };
+            
+            // Save to localStorage
+            storedUsers.push(newUser);
+            localStorage.setItem('emailUsers', JSON.stringify(storedUsers));
+            
+            // Auto sign in after successful registration
+            const signInUser = {
+                name: newUser.name,
+                email: newUser.email,
+                picture: `https://via.placeholder.com/40/10b981/ffffff?text=${newUser.name.charAt(0).toUpperCase()}`,
+                loginMethod: 'email'
+            };
+            
+            handleSignIn(signInUser);
+            showToast('✅ Account created successfully! Welcome to Era Plant!');
+        }
+
+        function getStoredEmailUsers() {
+            const users = localStorage.getItem('emailUsers');
+            return users ? JSON.parse(users) : [];
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Add Enter key support for email forms
+        function addEmailFormListeners() {
+            // Sign In form
+            document.getElementById('signInEmail').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('signInPassword').focus();
+                }
+            });
+            
+            document.getElementById('signInPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    signInWithEmail();
+                }
+            });
+            
+            // Sign Up form
+            document.getElementById('signUpName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('signUpEmail').focus();
+                }
+            });
+            
+            document.getElementById('signUpEmail').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('signUpPassword').focus();
+                }
+            });
+            
+            document.getElementById('signUpPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('signUpConfirmPassword').focus();
+                }
+            });
+            
+            document.getElementById('signUpConfirmPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    signUpWithEmail();
+                }
+            });
+        }
+
+        // Initialize Google Sign-In when page loads
+        window.addEventListener('load', function() {
+            // Add email form listeners
+            addEmailFormListeners();
+            
+            // Initialize Google Sign-In
+            if (typeof google !== 'undefined') {
+                google.accounts.id.initialize({
+                    client_id: 'YOUR_GOOGLE_CLIENT_ID',
+                    callback: handleCredentialResponse
+                });
+                
+                google.accounts.id.renderButton(
+                    document.getElementById('g_id_signin'),
+                    { theme: 'outline', size: 'large' }
+                );
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98398132569f7a2e',t:'MTc1ODYyNDg3My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
